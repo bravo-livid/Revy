@@ -1,1 +1,5 @@
 --!strict
+
+return function()
+   
+end
