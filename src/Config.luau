@@ -16,7 +16,8 @@ local Computes = {
 
     MASKS_PER_ARRAY = math.ceil(Config.MAX_COMPONENTS / Config.MASK_LENGTH),
     MASK_ARRAY_LENGTH = math.ceil(Config.MAX_COMPONENTS / Config.MASK_LENGTH) * math.ceil(Config.MASK_LENGTH / 8),
-
+    MASK_LENGTH_BYTES = math.ceil(Config.MASK_LENGTH / 8),
+    
 }
 
 for k, v in Computes do

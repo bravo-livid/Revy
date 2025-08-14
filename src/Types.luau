@@ -14,11 +14,14 @@ export type World = {
     detach: <T>(World, number, Component<T>) -> (),
 
     archetypes: Map<string, Archetype>,
+    archetypeMasks: Map<string, buffer>,
     entities: Map<number, string>,
     entityMasks: Map<number, buffer>,
     isComponentTable: Map<number, boolean>,
     isComponentInstance: Map<number, boolean>,
     componentDefaults: Map<number, any>,
+
+    archetypeCount: number,
 }
 
 export type Archetype = {

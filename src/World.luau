@@ -13,7 +13,7 @@ type World = Types.World
 local World = {}
 
 function World.new(): World
-    return table.freeze{
+    return {
         entity = EntityBuilder.new,
         query = Query.new,
         component = Component.new,
@@ -22,12 +22,15 @@ function World.new(): World
         despawn = Entity.despawn,
 
         archetypes = {},
+        archetypeMasks = {},
         entities = {},
         entityMasks = {},
 
         isComponentTable = {},
         isComponentInstance = {},
         componentDefaults = {},
+
+        archetypeCount = 0,
     }
 end
 

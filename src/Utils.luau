@@ -5,13 +5,14 @@
 local Config = require(script.Parent.Config)
 local MASK_LENGTH = Config.MASK_LENGTH
 local MAX_COMPONENTS = Config.MAX_COMPONENTS
+local MASK_LENGTH_BYTES = Config.MASK_LENGTH_BYTES
 
 local Utils = {}
 
 --[[
+    Sets the bits in the values to 1 in the mask array.
     @param maskArray: buffer
     @param values: { number }
-    Sets the bits in the values to 1 in the mask array.
 ]]
 function Utils.addToMaskArray(maskArray: buffer, values: { number })
     for index = 1, #values do
@@ -21,7 +22,7 @@ function Utils.addToMaskArray(maskArray: buffer, values: { number })
             continue -- Skip out of bounds values
         end
         
-        local maskIndex = (value // MASK_LENGTH) * 4
+        local maskIndex = (value // MASK_LENGTH) * MASK_LENGTH_BYTES
         local bitIndex = value % MASK_LENGTH
 
         local mask = buffer.readu32(maskArray, maskIndex)
@@ -34,6 +35,5 @@ function Utils.addToMaskArray(maskArray: buffer, values: { number })
         buffer.writeu32(maskArray, maskIndex, newMask)
     end
 end
-
 
 return Utils
