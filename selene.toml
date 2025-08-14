@@ -1,0 +1,10 @@
+std = "roblox"
+
+[globals]
+describe = true
+it = true
+beforeAll = true
+beforeEach = true
+afterAll = true
+afterEach = true
+expect = true

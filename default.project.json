@@ -1,0 +1,31 @@
+{
+  "name": "Revy",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "dev/shared"
+      },
+      "DevPackages": {
+        "$path": "DevPackages"
+      },
+      "Revy": {
+        "$path": "src"
+      }
+    },
+
+    "ServerScriptService": {
+      "Server": {
+        "$path": "dev/server"
+      }
+    },
+
+    "ReplicatedFirst": {
+      "Client": {
+        "$path": "dev/client"
+      }      
+    }
+
+  }
+}
