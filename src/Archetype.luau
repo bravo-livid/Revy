@@ -5,6 +5,7 @@
 local Config = require(script.Parent.Config)
 local Types = require(script.Parent.Types)
 local Logger = require(script.Parent.Logger)
+local Utils = require(script.Parent.Utils)
 
 type World = Types.World
 type Archetype = Types.Archetype
@@ -75,10 +76,10 @@ end
     @param entityId The unique identifier of the entity to be added.
 ]]--
 function Archetype.addEntity(archetype: Archetype, entityId: number, components: { any }, values: { any })
-
     local positionFromEntity = archetype.positionFromEntity
 
     if positionFromEntity[entityId] then
+        Logger.debug(Logger.warn, "AddEntity", `Entity {entityId} already exists in archetype, cannot add again.`)
         return
     end
 
@@ -86,11 +87,11 @@ function Archetype.addEntity(archetype: Archetype, entityId: number, components:
     local componentCount = #cache
 
     if componentCount ~= #components then
-        Logger.error("Archetype.addEntity", `Component count mismatch, expected: {componentCount}, got: {#components}, entityId: {entityId}`)
+        Logger.error("AddEntity", `Component count mismatch, expected: {componentCount}, got: {#components}, entityId: {entityId}`)
     end
 
     if componentCount ~= #values then
-        Logger.error("Archetype.addEntity", `Value count mismatch, expected: {componentCount}, got: {#values}, entityId: {entityId}`)
+        Logger.error("AddEntity", `Value count mismatch, expected: {componentCount}, got: {#values}, entityId: {entityId}`)
     end
 
     local entityFromPosition = archetype.entityFromPosition
@@ -104,7 +105,7 @@ function Archetype.addEntity(archetype: Archetype, entityId: number, components:
         local value = values[i]
         local index = indexFromComponent[component]
         if not index then
-            Logger.error("Archetype.addEntity", `Component {component} not found in archetype, entityId: {entityId}`)
+            Logger.error("AddEntity", `Component {component} not found in archetype, entityId: {entityId}`)
         end
         cache[index][position] = value
     end
@@ -113,6 +114,48 @@ function Archetype.addEntity(archetype: Archetype, entityId: number, components:
     positionFromEntity[entityId] = position
 
     archetype.entityCount = position
+end
+
+--[[
+    Removes an entity from the archetype.
+    @param archetype The archetype from which the entity will be removed.
+    @param entityId The unique identifier of the entity to be removed.
+]]--
+function Archetype.removeEntity(archetype: Archetype, entityId: number)
+    local positionFromEntity = archetype.positionFromEntity
+
+    local position = positionFromEntity[entityId]
+    if not position then
+        Logger.debug(Logger.warn, "RemoveEntity", "RemoveEntity", `Entity {entityId} not found in archetype, cannot remove.`)
+        return
+    end
+
+    local cache = archetype.cache
+    local lastPosition = archetype.entityCount
+    local entityFromPosition = archetype.entityFromPosition
+    local lastEntityId = entityFromPosition[lastPosition]
+
+    if position ~= lastPosition then
+        for i = 1, #cache do
+            local cacheEntry = cache[i]
+            
+            local lastValue = cacheEntry[lastPosition]
+            cacheEntry[position] = lastValue
+            cacheEntry[lastPosition] = nil
+        end
+        entityFromPosition[position] = lastEntityId
+        positionFromEntity[lastEntityId] = position
+    else
+        for i = 1, #cache do
+            local cacheEntry = cache[i]
+            cacheEntry[lastPosition] = nil
+        end
+    end
+
+    positionFromEntity[entityId] = nil
+    entityFromPosition[lastPosition] = nil
+
+    archetype.entityCount = lastPosition - 1
 end
 
 return Archetype

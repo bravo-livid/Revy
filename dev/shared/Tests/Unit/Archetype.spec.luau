@@ -91,7 +91,6 @@ return function()
     end)
 
     describe("addEntity", function()
-
         local world
         local defaultComponents = {0, 32, 255}
         local defaultValues: { any } = {"bye", "hello", "world"}
@@ -125,10 +124,8 @@ return function()
             local cache = archetype.cache
             local componentFromIndex = archetype.componentFromIndex
 
-            -- should add entities in the given order
-            for position = 1, #entities do
-                local entityId = entities[position]
-                expect(archetype.entityFromPosition[position]).to.equal(entityId)
+            for position, entityId in archetype.entityFromPosition do
+                expect(table.find(entities, entityId)).to.be.a("number")
                 expect(archetype.positionFromEntity[entityId]).to.equal(position)
                 local entityValues = values[entityId]
                 for i = 1, #cache do
@@ -145,6 +142,7 @@ return function()
                     expect(k - 1).to.equal(prev)
                     prev = k
                 end
+                expect(#cacheEntry).to.equal(#entities)
             end
         end
 
@@ -244,5 +242,131 @@ return function()
         end)
     end)
 
+    describe("removeEntity", function()
+        local world
+        local defaultComponents = {0, 32, 255}
+        local defaultValues = {"bye", "hello", "world"}
+        local maskArray = buffer.create(Config.MASK_ARRAY_LENGTH)
+        Utils.addToMaskArray(maskArray, defaultComponents)
+        local hash = buffer.tostring(maskArray)
+        local archetype
+        local addedEntities = {1, 2, 3, 4, 5}
+        local removedEntities = {1, 3, 5}
+
+        beforeEach(function()
+            world = World.new()
+            archetype = Archetype.new(world, maskArray, hash)
+            for _, e in addedEntities do
+                Archetype.addEntity(archetype, e, defaultComponents, defaultValues)
+            end
+        end)
+
+        local function verify(archetype: Archetype, addedEntities: {number}, removedEntities: {number})
+            local excpetedEntities = {} 
+            for _, v in addedEntities do
+                if not table.find(removedEntities, v) then
+                    table.insert(excpetedEntities, v)
+                end
+            end
+
+            -- check that the entity count is correct
+            expect(archetype.entityCount).to.equal(#excpetedEntities)
+
+            local cache = archetype.cache
+            local entityFromPosition = archetype.entityFromPosition
+            local positionFromEntity = archetype.positionFromEntity
+
+            -- check that the entityFromPosition and positionFromEntity are correct
+            for position, entityId in entityFromPosition do
+                expect(table.find(excpetedEntities, entityId)).to.be.a("number")
+                expect(positionFromEntity[entityId]).to.equal(position)
+            end
+
+            -- check that the cache is tightly packed and size is correct
+            for i = 1, #cache do
+                local cacheEntry = cache[i]
+                local prev = 0
+                for k, v in cacheEntry do
+                    expect(k - 1).to.equal(prev)
+                    prev = k
+                end
+                expect(#cacheEntry).to.be.equal(#excpetedEntities)
+            end
+
+        end
+
+        describe("Happy Path", function()  
+            it("removes said entities", function()
+                for _, e in removedEntities do
+                    Archetype.removeEntity(archetype, e)
+                end
+                verify(archetype, addedEntities, removedEntities)
+            end)
+
+            it("removing the entity that was added last", function()
+                local e1 = 5
+                local e2 = 4
+                Archetype.removeEntity(archetype, e1)
+                Archetype.removeEntity(archetype, e2)
+                verify(archetype, addedEntities, { e1, e2 })
+            end)
+
+            it("check swapping logic", function()
+                local e1 = 1
+                local e2 = 2
+                local components = {11, 12}
+                local values1 = {"E1Value1", "E1Value2"}
+                local values2 = {"E2Value1", "E2Value2"}
+                local maskArray = buffer.create(Config.MASK_ARRAY_LENGTH)
+                Utils.addToMaskArray(maskArray, components)
+                local hash = buffer.tostring(maskArray)
+
+                local archetype = Archetype.new(world, maskArray, hash)
+                Archetype.addEntity(archetype, e1, components, values1)
+                Archetype.addEntity(archetype, e2, components, values2)
+
+                Archetype.removeEntity(archetype, e1)
+
+                local cache = archetype.cache
+
+                expect(cache[1][1]).to.equal(values2[1])
+                expect(cache[2][1]).to.equal(values2[2])
+            end)
+
+        end)
+
+        describe("Edge Cases", function()
+            -- expect the call to abort early, as the entity is not in the archetype
+            it("removing an entity that does not exist", function()
+                local e = 6
+                expect(function()
+                    Archetype.removeEntity(archetype, e)
+                end).to.be.ok()
+                verify(archetype, addedEntities, {})
+            end)
+         
+            -- should be handled like removing the last added entity
+            it("removing the last entity in the archetype", function()
+                local archetype = Archetype.new(world, maskArray, "fakeHash") -- create a new archetype to avoid conflicts we use fake hash to bypass the caching mechanism
+                Archetype.addEntity(archetype, 1, defaultComponents, defaultValues)
+                Archetype.removeEntity(archetype, 1)
+
+                -- verify that the archetype is empty
+                for i, cacheEntry in archetype.cache do
+                    expect(#cacheEntry).to.equal(0)
+                end
+                local c = 0
+                for _, _ in archetype.entityFromPosition do
+                    c += 1
+                end
+                expect(c).to.equal(0)
+                c = 0
+                for _, _ in archetype.positionFromEntity do
+                    c += 1
+                end
+                expect(c).to.equal(0)
+            end)
+        end)
+    end)
 
 end
