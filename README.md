@@ -24,9 +24,8 @@
     - Future plans to add a roblox plugin, test suite, custom profiler, etc.
 
 - It has very minimal syntax 
-    - It is a bit more verbose than industry standards like jecs but the verbosity is needed for the performance
-  - 
-    - More about the syntax can be found in the "How to use Jecs?" section.
+    - It is a bit more verbose than industry standards like jecs but the verbosity is needed for the performance 
+    - More about the syntax can be found in the "How to use Revy?" section.
 
 
 ## How to use Revy?
